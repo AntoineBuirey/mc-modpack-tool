@@ -53,3 +53,29 @@ def download_mod_file(
         print(f"Error downloading file: {e}")
         return False
 
+
+def download_mod_file_ram(mod_id : int, file_id : int, progress_bar : ProgressBar | None = None) -> bytes:
+    """
+    Downloads a mod file into RAM and returns the bytes.
+    """
+    download_url = f"{base_url}/mods/{mod_id}/files/{file_id}/download"
+
+    with urllib.request.urlopen(download_url) as response:
+        if response.status == 200:
+            total_size = int(response.getheader('Content-Length').strip())
+            downloaded_size = 0
+            sub_pb = progress_bar.set_subbar(total_size, f"Downloading {mod_id}-{file_id}", True) if progress_bar else None
+            data = bytearray()
+            while True:
+                chunk = response.read(8192)
+                if not chunk:
+                    break
+                data.extend(chunk)
+                downloaded_size += len(chunk)
+                if sub_pb:
+                    sub_pb.update(len(chunk))
+            progress_bar.remove_subbar() if progress_bar else None
+            return bytes(data)
+        else:
+            raise Exception(f"Failed to download file: HTTP {response.status}")
+        

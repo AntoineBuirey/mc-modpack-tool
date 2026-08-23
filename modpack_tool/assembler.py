@@ -43,11 +43,13 @@ def write_modpack_archive(output_path: str,
     
 
 def split_modpack_archive(archive_path: str, output_folder: str):
-    archive = ModpackArchive(archive_path)
+    file_name = os.path.basename(archive_path)
+    with open(archive_path, 'rb') as archive_file:
+        archive = ModpackArchive(archive_file.read())
     os.makedirs(output_folder, exist_ok=True)
     
-    server_path = os.path.join(output_folder, f"server-{archive.file_name}")
-    client_path = os.path.join(output_folder, f"client-{archive.file_name}")
+    server_path = os.path.join(output_folder, f"server-{file_name}")
+    client_path = os.path.join(output_folder, f"client-{file_name}")
 
     storage = DataStorage()
     

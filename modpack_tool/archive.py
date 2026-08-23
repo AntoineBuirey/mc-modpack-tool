@@ -1,6 +1,7 @@
 import zipfile
 import os
 from typing import Generator
+import io
 
 from . import api
 from .manifest import Manifest
@@ -8,10 +9,8 @@ from .modlist import ModList
 from .progressBar import ProgressBar
 
 class ModpackArchive:
-    def __init__(self, file_path : str):
-        self.file_path = file_path
-        self.file_name = os.path.basename(file_path)
-        self.zip_file = zipfile.ZipFile(file_path, 'r')
+    def __init__(self, file : bytes):
+        self.zip_file = zipfile.ZipFile(io.BytesIO(file), 'r')
         with self.zip_file.open('manifest.json') as manifest_file:
             self.manifest = Manifest(manifest_file)
         with self.zip_file.open('modlist.html') as modlist_file:

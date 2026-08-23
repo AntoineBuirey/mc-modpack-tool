@@ -21,6 +21,7 @@ class ProgressBar:
         self.__subbar : ProgressBar | None = None
         self.__use_percentage = use_percentage
         self.__nested_level = _nested_level
+        self.display()  # Display the progress bar immediately upon initialization
         
     @staticmethod
     def hide_cursor():
@@ -87,6 +88,7 @@ class ProgressBar:
     def display(self):
         # first, go to the bottom of the console, minus the number parent subbars (nested levels)
         term_height = self.__get_term_height() - 1
+        ProgressBar.hide_cursor()
         # save position
         print(f"\033[s", end='')  # Save cursor position
         print(f"\033[H\033[{term_height - self.__nested_level}E", end='')  # Move cursor to the bottom of the console
@@ -105,6 +107,7 @@ class ProgressBar:
         
         # reset cursor position
         print(f"\033[u", end='')  # Restore cursor position
+        ProgressBar.show_cursor()
         
         
         
