@@ -1,0 +1,13 @@
+[project]
+name = "ModpackTool"
+version = "0.1.0"
+description = "A tool for managing minecraft modpacks."
+authors = [
+    { name = "Antoine Buirey", email = "antoine.buirey@gmail.com" },
+]
+requires-python = ">=3.12"
+
+[project.scripts]
+modpack-assembler = "modpack_tool.assembler:main"
+modpack-downloader = "modpack_tool.downloader:main"
+
