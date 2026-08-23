@@ -54,29 +54,37 @@ def install_openjdk(version: int, progressbar : ProgressBar|None = None) -> None
             pb.update(1)
 
         os.makedirs("/etc/apt/keyrings", exist_ok=True)
-        # Téléchargement et installation propre de la clé GPG
-        wget_proc = subprocess.Popen(["wget", "-O", "-", "https://adoptium.net"], stdout=subprocess.PIPE)
-        with open("/etc/apt/keyrings/adoptium.asc", "wb") as gpg_file:
-            subprocess.run(["tee"], stdin=wget_proc.stdout, stdout=gpg_file, check=True)
-        wget_proc.wait()
+        key_url = "https://packages.adoptium.net/artifactory/api/gpg/key/public"
+        keyring_path = "/etc/apt/keyrings/adoptium.gpg"
+
+        # Download the official Adoptium GPG key and convert it to a proper apt keyring.
+        key_proc = subprocess.run(["wget", "-qO-", key_url], check=True, capture_output=True)
+        subprocess.run(["gpg", "--dearmor", "--yes", "--output", keyring_path], input=key_proc.stdout, check=True)
         if pb:
             pb.update(1)
 
         # Récupère le nom de code de la distribution (ex: bookworm, trixie)
+        codename = ""
         try:
-            codename_proc = subprocess.run(["lsb_release", "-cs"], capture_output=True, text=True)
+            codename_proc = subprocess.run(["lsb_release", "-cs"], capture_output=True, text=True, check=False)
             codename = codename_proc.stdout.strip()
         except Exception:
-            # Alternative si lsb_release n'est pas installé
-            with open("/etc/os-release", "r") as f:
-                for line in f:
-                    if line.startswith("VERSION_CODENAME="):
-                        codename = line.split("=")[1].strip().strip('"')
+            codename = ""
+
+        if not codename:
+            try:
+                with open("/etc/os-release", "r") as f:
+                    for line in f:
+                        if line.startswith("VERSION_CODENAME="):
+                            codename = line.split("=", 1)[1].strip().strip('"')
+                            break
+            except Exception:
+                codename = ""
 
         if not codename:
             raise ValueError("Could not determine the distribution codename. Please ensure lsb_release is installed or check /etc/os-release.")
 
-        repo_line = f"deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://adoptium.net {codename} main\n"
+        repo_line = f"deb [signed-by={keyring_path}] https://packages.adoptium.net/artifactory/deb {codename} main\n"
         with open("/etc/apt/sources.list.d/adoptium.list", "w") as repo_file:
             repo_file.write(repo_line)
         if pb:
