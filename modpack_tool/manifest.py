@@ -1,33 +1,7 @@
 import json
-from dataclasses import dataclass
-from typing import Generator, Literal, IO
+from typing import Generator, IO
 
-
-@dataclass
-class Version:
-    major: int
-    minor: int
-    patch: int
-    
-    @classmethod
-    def from_string(cls, version_str : str):
-        parts = version_str.split('.')
-        major = int(parts[0]) if len(parts) > 0 else 0
-        minor = int(parts[1]) if len(parts) > 1 else 0
-        patch = int(parts[2]) if len(parts) > 2 else 0
-        return Version(major, minor, patch)
-
-@dataclass
-class ManifestFile:
-    project_id: int
-    file_id: int
-    required: bool
-    isLocked: bool
-    
-@dataclass
-class ModLoader:
-    name: Literal['Fabric', 'Forge', 'Neoforge']
-    version: Version
+from .classes import Version, ManifestFile, ModLoader
 
 class Manifest:
     def __init__(self, stream : IO):

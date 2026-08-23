@@ -1,18 +1,11 @@
-from dataclasses import dataclass
-from typing import Generator, Literal, TextIO
+from typing import Generator, TextIO
 import zipfile
 import re
 
+from .classes import Mod
+
 RE_NAME = re.compile(r'^(.*) \(by (.*)\)$')
 RE_TYPE = re.compile(r'^https://www\.curseforge\.com/minecraft/(mc-mods|shaders|texture-packs)/.*$')
-
-@dataclass
-class Mod:
-    name: str
-    creator: str
-    url: str
-    type: Literal['mod', 'shaders', 'texturepack', 'unknown']
-
 
 class ModList:
     def __init__(self, stream : zipfile.ZipExtFile | TextIO):

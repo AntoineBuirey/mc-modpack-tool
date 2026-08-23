@@ -5,7 +5,7 @@ import argparse
 import itertools
 import json
 
-from .manifest import ManifestFile
+from .classes import ManifestFile
 from .modlist import Mod
 from .archive import ModpackArchive
 from .dataStorage import DataStorage, ModData

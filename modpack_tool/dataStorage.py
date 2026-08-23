@@ -1,7 +1,8 @@
 import os
 import sys
-from dataclasses import dataclass
 import sqlite3 as sql
+
+from .classes import ModData
 
 if sys.platform == "win32":
     data_folder = os.path.join(os.getenv('APPDATA'), "MCModSorter")
@@ -9,13 +10,6 @@ elif sys.platform == "darwin":
     data_folder = os.path.join(os.path.expanduser('~'), "Library", "Application Support", "MCModSorter")
 else:
     data_folder = os.path.join(os.path.expanduser('~'), ".MCModSorter")
-
-@dataclass
-class ModData:
-    mod_id: int
-    file_id: int
-    server: bool
-    client: bool
 
 class DataStorage:
     __instance : 'DataStorage | None' = None
