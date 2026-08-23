@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import os
+from pathlib import Path
 
 from .progressBar import ProgressBar
 from .classes import Version
@@ -46,69 +47,72 @@ def install_openjdk(version: int, progressbar : ProgressBar|None = None) -> None
         raise PermissionError("This function requires root privileges. Please run the script as root or with sudo.")
 
     pb = progressbar.set_subbar(5, f"Installing OpenJDK {version}", use_percentage=False) if progressbar else None
+    log_path = Path("/var/log/modpack-tool/openjdk.log")
+    log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    try:
-        subprocess.run(["apt-get", "update"], check=True)
-        subprocess.run(["apt-get", "install", "-y", "wget", "apt-transport-https", "gnupg"], check=True)
-        if pb:
-            pb.update(1)
-
-        os.makedirs("/etc/apt/keyrings", exist_ok=True)
-        key_url = "https://packages.adoptium.net/artifactory/api/gpg/key/public"
-        keyring_path = "/etc/apt/keyrings/adoptium.gpg"
-
-        # Download the official Adoptium GPG key and convert it to a proper apt keyring.
-        key_proc = subprocess.run(["wget", "-qO-", key_url], check=True, capture_output=True)
-        subprocess.run(["gpg", "--dearmor", "--yes", "--output", keyring_path], input=key_proc.stdout, check=True)
-        if pb:
-            pb.update(1)
-
-        # Récupère le nom de code de la distribution (ex: bookworm, trixie)
-        codename = ""
+    with log_path.open("a", encoding="utf-8") as log_file:
         try:
-            codename_proc = subprocess.run(["lsb_release", "-cs"], capture_output=True, text=True, check=False)
-            codename = codename_proc.stdout.strip()
-        except Exception:
-            codename = ""
+            subprocess.run(["apt-get", "update"], check=True, stdout=log_file, stderr=log_file)
+            subprocess.run(["apt-get", "install", "-y", "wget", "apt-transport-https", "gnupg"], check=True, stdout=log_file, stderr=log_file)
+            if pb:
+                pb.update(1)
 
-        if not codename:
+            os.makedirs("/etc/apt/keyrings", exist_ok=True)
+            key_url = "https://packages.adoptium.net/artifactory/api/gpg/key/public"
+            keyring_path = "/etc/apt/keyrings/adoptium.gpg"
+
+            # Download the official Adoptium GPG key and convert it to a proper apt keyring.
+            key_proc = subprocess.run(["wget", "-qO-", key_url], check=True, stdout=subprocess.PIPE, stderr=log_file)
+            subprocess.run(["gpg", "--dearmor", "--yes", "--output", keyring_path], input=key_proc.stdout, check=True, stdout=log_file, stderr=log_file)
+            if pb:
+                pb.update(1)
+
+            # Récupère le nom de code de la distribution (ex: bookworm, trixie)
+            codename = ""
             try:
-                with open("/etc/os-release", "r") as f:
-                    for line in f:
-                        if line.startswith("VERSION_CODENAME="):
-                            codename = line.split("=", 1)[1].strip().strip('"')
-                            break
+                codename_proc = subprocess.run(["lsb_release", "-cs"], stdout=subprocess.PIPE, text=True, check=False, stderr=log_file)
+                codename = codename_proc.stdout.strip()
             except Exception:
                 codename = ""
 
-        if not codename:
-            raise ValueError("Could not determine the distribution codename. Please ensure lsb_release is installed or check /etc/os-release.")
+            if not codename:
+                try:
+                    with open("/etc/os-release", "r") as f:
+                        for line in f:
+                            if line.startswith("VERSION_CODENAME="):
+                                codename = line.split("=", 1)[1].strip().strip('"')
+                                break
+                except Exception:
+                    codename = ""
 
-        repo_line = f"deb [signed-by={keyring_path}] https://packages.adoptium.net/artifactory/deb {codename} main\n"
-        with open("/etc/apt/sources.list.d/adoptium.list", "w") as repo_file:
-            repo_file.write(repo_line)
-        if pb:
-            pb.update(1)
+            if not codename:
+                raise ValueError("Could not determine the distribution codename. Please ensure lsb_release is installed or check /etc/os-release.")
 
-        subprocess.run(["apt-get", "update"], check=True)
-        if pb:
-            pb.update(1)
+            repo_line = f"deb [signed-by={keyring_path}] https://packages.adoptium.net/artifactory/deb {codename} main\n"
+            with open("/etc/apt/sources.list.d/adoptium.list", "w") as repo_file:
+                repo_file.write(repo_line)
+            if pb:
+                pb.update(1)
 
-        package_name = f"temurin-{version}-jdk"
-        
-        # Vérification si le paquet existe dans les dépôts mis à jour
-        check_pkg = subprocess.run(["apt-cache", "show", package_name], capture_output=True)
-        if check_pkg.returncode != 0:
-            raise ValueError(f"Package {package_name} not found in the repositories. Please check the version or the repository configuration.")
+            subprocess.run(["apt-get", "update"], check=True, stdout=log_file, stderr=log_file)
+            if pb:
+                pb.update(1)
 
-        subprocess.run(["apt-get", "install", "-y", package_name], check=True)
-        if pb:
-            pb.update(1)
+            package_name = f"temurin-{version}-jdk"
 
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"An error occurred while executing a command: {e}")
-    except Exception as e:
-        raise RuntimeError(f"An error occurred during the installation of OpenJDK {version}: {e}")
+            # Vérification si le paquet existe dans les dépôts mis à jour
+            check_pkg = subprocess.run(["apt-cache", "show", package_name], stdout=subprocess.PIPE, stderr=log_file)
+            if check_pkg.returncode != 0:
+                raise ValueError(f"Package {package_name} not found in the repositories. Please check the version or the repository configuration.")
+
+            subprocess.run(["apt-get", "install", "-y", package_name], check=True, stdout=log_file, stderr=log_file)
+            if pb:
+                pb.update(1)
+
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"An error occurred while executing a command: {e}")
+        except Exception as e:
+            raise RuntimeError(f"An error occurred during the installation of OpenJDK {version}: {e}")
     
     if progressbar:
         progressbar.remove_subbar()

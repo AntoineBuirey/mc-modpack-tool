@@ -1,6 +1,7 @@
 from urllib import request
 import os
 import subprocess
+from pathlib import Path
 
 from .progressBar import ProgressBar
 from .classes import Version
@@ -46,14 +47,17 @@ def execute_forge_installer(installer_name: str, install_directory: str) -> bool
     """
     Executes the Forge installer with the specified installation directory.
     """
+    log_path = Path("/var/log/modpack-tool/forge_installer.log")
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     
-    command = ['java', '-jar', installer_name, '--installServer']
-    try:
-        result = subprocess.run(command, cwd=install_directory, check=True)
-        return result.returncode == 0
-    except subprocess.CalledProcessError as e:
-        print(f"Error executing command {' '.join(command)}: {e}")
-        return False
+    with log_path.open("a", encoding="utf-8") as log_file:
+        command = ['java', '-jar', installer_name, '--installServer']
+        try:
+            result = subprocess.run(command, cwd=install_directory, check=True, stdout=log_file, stderr=log_file)
+            return result.returncode == 0
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing command {' '.join(command)}: {e}")
+            return False
     
 def patch_eula(install_directory: str) -> bool:
     """
