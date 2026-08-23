@@ -94,7 +94,7 @@ def install_openjdk(version: int, progressbar : ProgressBar|None = None) -> None
         if pb:
             pb.update(1)
 
-        package_name = f"temurin-{version}-jdk-headless"
+        package_name = f"temurin-{version}-jdk"
         
         # Vérification si le paquet existe dans les dépôts mis à jour
         check_pkg = subprocess.run(["apt-cache", "show", package_name], capture_output=True)
