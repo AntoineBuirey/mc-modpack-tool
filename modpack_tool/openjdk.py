@@ -63,11 +63,11 @@ def install_openjdk(version: int, progressbar : ProgressBar|None = None) -> None
             pb.update(1)
 
         # Récupère le nom de code de la distribution (ex: bookworm, trixie)
-        codename_proc = subprocess.run(["lsb_release", "-cs"], capture_output=True, text=True)
-        codename = codename_proc.stdout.strip()
-        
-        # Alternative si lsb_release n'est pas installé
-        if not codename:
+        try:
+            codename_proc = subprocess.run(["lsb_release", "-cs"], capture_output=True, text=True)
+            codename = codename_proc.stdout.strip()
+        except Exception:
+            # Alternative si lsb_release n'est pas installé
             with open("/etc/os-release", "r") as f:
                 for line in f:
                     if line.startswith("VERSION_CODENAME="):
