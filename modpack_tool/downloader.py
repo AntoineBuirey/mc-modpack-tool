@@ -6,6 +6,7 @@ from .progressBar import ProgressBar
 from .archive import ModpackArchive
 from .forge import download_forge_installer, patch_eula, execute_forge_installer
 from .openjdk import check_java_installed, get_java_version, install_openjdk
+from .linux import create_systemd_service, create_user, change_folder_ownership, change_folder_permissions
 
 archive_path = r"C:\vm_utils\modpacks\Toine34's Colony-1.0.3-1.0.3.zip"
 download_folder = r"C:\vm_utils\test_install"
@@ -20,8 +21,11 @@ def download_modpack(archive_source : str|tuple[int, int], download_folder: str,
         # 4. execute forge installer & patch eula
         # 5. download mods
         # 6. copy overrides
+        # 7. create systemd service
+        # 8. create user and group
+        # 9. change folder ownership and permissions
         
-        pb = ProgressBar(total=6, label="Installing modpack", use_percentage=False)
+        pb = ProgressBar(total=9, label="Installing modpack", use_percentage=False)
     else:
         pb = None
     
@@ -74,8 +78,31 @@ def download_modpack(archive_source : str|tuple[int, int], download_folder: str,
     archive.copy_overrides(destination_path=download_folder, progress_bar=pb)
     if pb:
         pb.update(1)
-        pb.clear()
+        
+    # 7. create systemd service
+    service_name = f"minecraft_{archive.manifest.name.replace(' ', '_')}"
+    if pb:
+        pb.update(1)
+    
+    # 8. create user and group
+    user = "minecraft"
+    group = "minecraft"
+    create_user(user, group)
+    if pb:
+        pb.update(1)
+    
+    # 9. change folder ownership and permissions
+    change_folder_ownership(download_folder, user, group)
+    if pb:
+        pb.update(1)
 
+
+    if pb:
+        pb.clear()
+        
+    print(f"Modpack '{archive.manifest.name}' installed successfully in '{download_folder}'.")
+    print(f"Systemd service '{service_name}' created. You can start the server with 'sudo systemctl start {service_name}'.")
+    print(f"To enable the service to start on boot, run 'sudo systemctl enable {service_name}'.")
 
 def main():
     parser = argparse.ArgumentParser(description="Download and install a modpack from a zip archive.")
