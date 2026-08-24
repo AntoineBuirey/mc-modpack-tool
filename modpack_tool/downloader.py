@@ -12,6 +12,8 @@ archive_path = r"C:\vm_utils\modpacks\Toine34's Colony-1.0.3-1.0.3.zip"
 download_folder = r"C:\vm_utils\test_install"
 
 def download_modpack(archive_source : str|tuple[int, int], download_folder: str, use_progress_bar: bool = True):
+    download_folder = os.path.abspath(download_folder)
+    print(f"Installing modpack to '{download_folder}'...")
     
     if use_progress_bar:
         # steps:
