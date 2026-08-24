@@ -83,7 +83,7 @@ def download_modpack(archive_source : str|tuple[int, int], download_folder: str,
     group = "minecraft"
         
     # 7. create systemd service
-    service_name = f"minecraft_{archive.manifest.name.replace(' ', '_')}"
+    service_name = f"minecraft_{archive.manifest.name.replace(' ', '_').replace("'", '').lower()}"
     create_systemd_service(service_name,
                            download_folder, 
                            "/bin/bash run.sh",
