@@ -69,15 +69,13 @@ def create_user(user: str, group: str) -> None:
     
     with log_path.open("a", encoding="utf-8") as log_file:
         log_file.write(f"Creating user '{user}' and group '{group}' if they do not exist.\n")
-        # Create group if it doesn't exist
-        subprocess.run(["getent", "group", group], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if subprocess.run(["getent", "group", group]).returncode != 0:
-            subprocess.run(["groupadd", group], check=True, stdout=log_file, stderr=log_file)
-        
-        # Create user if it doesn't exist
-        subprocess.run(["id", "-u", user], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if subprocess.run(["id", "-u", user]).returncode != 0:
-            subprocess.run(["useradd", "-r", "-g", group, "-d", f"/home/{user}", "-s", "/bin/false", user], check=True, stdout=log_file, stderr=log_file)
+        # Create group first
+        subprocess.run(["adduser", "--system", "--group", group], check=True, stdout=log_file, stderr=log_file)
+        # Create user with the specified group
+        subprocess.run(["adduser", "--system", "--ingroup", group, user], check=True, stdout=log_file, stderr=log_file)
+
+
+
 
 def change_folder_ownership(path: str, user: str, group: str) -> None:
     """

@@ -79,20 +79,27 @@ def download_modpack(archive_source : str|tuple[int, int], download_folder: str,
     if pb:
         pb.update(1)
         
+    user = "minecraft"
+    group = "minecraft"
+        
     # 7. create systemd service
     service_name = f"minecraft_{archive.manifest.name.replace(' ', '_')}"
+    create_systemd_service(service_name,
+                           download_folder, 
+                           "/bin/bash run.sh",
+                           user,
+                           group)
     if pb:
         pb.update(1)
     
     # 8. create user and group
-    user = "minecraft"
-    group = "minecraft"
     create_user(user, group)
     if pb:
         pb.update(1)
     
     # 9. change folder ownership and permissions
     change_folder_ownership(download_folder, user, group)
+    change_folder_permissions(download_folder, "770")
     if pb:
         pb.update(1)
 

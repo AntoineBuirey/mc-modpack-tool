@@ -32,7 +32,21 @@ def get_java_version(minecraft_version: Version) -> int:
             return java_version
     raise ValueError(f"No Java version mapping found for Minecraft version {minecraft_version}. Please update the mapping in the code.")
     
-
+def is_java_installed(required_version: int) -> bool:
+    """
+    Checks if the required Java version is installed.
+    """
+    try:
+        result = subprocess.run(['java', '-version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        output = result.stderr
+        if f'openjdk version "{required_version}' in output or f'java version "{required_version}' in output:
+            return True
+    except FileNotFoundError:
+        return False
+    except subprocess.CalledProcessError as e:
+        print(f"Error checking Java version: {e}")
+        return False
+    return False
 
 def install_openjdk(version: int, progressbar : ProgressBar|None = None) -> None:
     """
@@ -41,6 +55,10 @@ def install_openjdk(version: int, progressbar : ProgressBar|None = None) -> None
     """
     if not sys.platform == "linux":
         raise EnvironmentError("This function is only supported on Linux systems.")
+    
+    if is_java_installed(version):
+        print(f"Java {version} is already installed.")
+        return
     
     # 1. Vérification des privilèges Root / Sudo
     if os.geteuid() != 0:

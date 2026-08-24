@@ -57,7 +57,7 @@ class ModpackArchive:
         return len(self.manifest)
     
     def download_mods(self, destination_path : str, progress_bar : ProgressBar | None = None):
-        pb = progress_bar.set_subbar(len(self), "Downloading mods", True) if progress_bar else None
+        pb = progress_bar.set_subbar(len(self), "Downloading mods", False) if progress_bar else None
         for file, mod in self.mods:
             file_info = api.get_file_info(file.project_id, file.file_id)
             filename = file_info.get('fileName', 'Unknown') if file_info else 'Unknown'
